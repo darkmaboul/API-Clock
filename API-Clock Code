@@ -1,7 +1,8 @@
-/* If you want to see the Material and Info about the API go to INFO 
+/* If you want to see the Material and API Info go to INFO 
 remember to create an account for the weather and news API or you will not be able to use them (Main page Link in INFO)
-The clock may sometime display 00:00 (if UTC+0) in this case its probably from the alimentation or your WiFi connection
-you have to press the 'en' button on your ESP or unplug it (try at least 3 times) */
+The clock may sometime display 00:00 (if UTC+0) in this case its probably due to your Power supply or your WiFi connection
+you have to press the 'en' button on your ESP or unplug it (try at least 3 times)
+if it still dont work verify the WiFi connection or change the power supply*/
 
 #include <MD_MAX72xx.h>
 #include <MD_Parola.h>
@@ -15,7 +16,7 @@ you have to press the 'en' button on your ESP or unplug it (try at least 3 times
 bool disp = true;
 MD_Parola display = MD_Parola(MD_MAX72XX::FC16_HW,21,4); // CS_PIN Connected to PIN 21
 WiFiUDP udp;
-NTPClient timeClient(udp,"fr.pool.ntp.org",3600 * 2, 5 * 60 * 1000); // this line choose wich server you choose for your hour and your UTC (for exemple this is UTC+2)
+NTPClient timeClient(udp,"fr.pool.ntp.org",3600 * 2, 5 * 60 * 1000); // this line choose wich NTP server you choose for your hour and your UTC (for exemple this is UTC+2)
 
 const char* ssid = "YOUR_SSID";
 const char* password = "YOUR_PASSWORD";
