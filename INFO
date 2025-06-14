@@ -1,7 +1,12 @@
 Material : 
+
 - ESP32
 - Led Matrix (https://www.amazon.fr/dp/B099F3412P?ref=ppx_pop_dt_b_product_details&th=1)
 - IR sensor (https://www.amazon.fr/infrarouge-dévitement-dobstacles-connexion-intelligente/dp/B08WX8N9P6/ref=sr_1_12)
 
 API : 
-BTC (account not required) : 
+all the API are free !
+
+- BTC (account not required) : https://www.coingecko.com/en/api
+- Weather / temp (account required) : https://openweathermap.org/api
+- News (account required) : https://worldnewsapi.com
