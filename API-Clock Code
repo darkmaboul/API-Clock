@@ -1,0 +1,237 @@
+/* If you want to see the Material and Info about the API go to MYPAGE 
+remember to create an account for the weather and news API or you will not be able to use them */
+
+#include <MD_MAX72xx.h>
+#include <MD_Parola.h>
+#include <SPI.h>
+#include <WiFi.h>
+#include <WiFiUdp.h>
+#include <NTPClient.h>
+#include <HTTPClient.h>
+#include <ArduinoJson.h>
+#define IR 16 // IR sensor to turn On and Off the Matrix
+bool disp = true;
+MD_Parola display = MD_Parola(MD_MAX72XX::FC16_HW,21,4); // CS_PIN Connected to PIN 21
+WiFiUDP udp;
+NTPClient timeClient(udp,"fr.pool.ntp.org",3600 * 2, 5 * 60 * 1000); // this line choose wich server you choose for your hour and your UTC (for exemple this is UTC+2)
+
+const char* ssid = "YOUR_SSID";
+const char* password = "YOUR_PASSWORD";
+
+HTTPClient http;
+String rep;
+
+const char* urlBTC = "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=eur";
+const char* urlWTR = "https://api.openweathermap.org/data/2.5/weather?lat=YOUR_LAT&lon=YOUR_LON&lang=fr&appid=YOUR_APIKEY&units=metric"; // the API will give you the temperature in Celsius you can change it with 'units='
+const char* urlNEWS ="https://api.worldnewsapi.com/top-news?source-country=fr&language=fr&headlines-only=true&max-news-per-cluster=1&api-key=YOUR_APIKEY"; // you can change country/language by removing fr for the one you want
+
+String currentTime;
+int Del;
+int Last;
+String BTC;
+String WTR;
+String NEWS[5];
+int newsSelect;
+
+int IRLast;
+int IRDelay = 1000;
+void setup() {
+  pinMode(2, OUTPUT);
+  pinMode(IR, INPUT);
+  WiFi.persistent(false);
+  WiFi.begin(ssid, password);
+  while(WiFi.status() != WL_CONNECTED)
+  {
+    delay(350);
+  }
+  display.begin();
+  timeClient.begin();
+  attachInterrupt(digitalPinToInterrupt(IR),pwr, FALLING);
+}
+void pwr()
+{
+  if(millis() - IRLast > IRDelay)
+  {
+    IRLast = millis();
+    if(disp)
+    {
+      disp = false;
+      display.print(" ");  // Parola dont have any function to turn off the Led Matrix so you will print " " and pause the screen 
+      display.displaySuspend(true);
+    }
+    else
+    {
+      disp = true;
+      display.displaySuspend(false);
+    }
+  }
+}
+
+void loop() {
+if(millis() - Last > Del)
+{
+    Del = 1800000*2; // every time the WiFi will turn on to use API 
+    Last = millis();
+    delay(2500);
+  if(WiFi.status() != WL_CONNECTED)
+  {
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(ssid, password);
+    while(WiFi.status() != WL_CONNECTED)
+    {
+      delay(250);
+    }
+  }
+  if(WiFi.status() == WL_CONNECTED)
+  {
+  timeClient.update();
+      http.begin(urlBTC);
+      if(http.GET() > 0)
+      {
+        rep = http.getString();
+        StaticJsonDocument<50> BTCdoc;
+        DeserializationError error = deserializeJson(BTCdoc, rep);
+        if(!error)
+        {
+          int BTCprice = BTCdoc["bitcoin"]["eur"];
+          BTC = "BTC: "; BTC += BTCprice; BTC += " euro";
+        }
+      }
+      http.end();
+    }
+
+      http.begin(urlWTR);
+      if(http.GET() > 0)
+      {
+        rep = http.getString();
+        StaticJsonDocument<200> WTRdoc;
+        DeserializationError error = deserializeJson(WTRdoc, rep);
+        if(!error)
+        {
+          String name = WTRdoc["name"];
+          String temp = WTRdoc["main"]["temp"];
+          JsonObject obj = WTRdoc["weather"][0];
+          String desc = obj["description"];
+          WTR = name; WTR += ": "; WTR += temp; WTR += " C "; WTR += desc;
+        }
+      }
+      http.end();
+
+      http.begin(urlNEWS);
+      if(http.GET() > 0)
+      {
+        rep = http.getString();
+        StaticJsonDocument<300> NEWSdoc;
+        DeserializationError error = deserializeJson(NEWSdoc, rep);
+        if(!error)
+        {
+          for(int n = 0; n < 5; n++)
+          {
+            NEWS[n] = NEWSdoc["top_news"][n]["news"][0]["title"].as<String>();
+          }
+        }
+      }
+      WiFi.disconnect(true);
+      WiFi.mode(WIFI_OFF);
+    }
+  if(disp)
+  {
+    if(timeClient.getHours() <= 9)
+  {
+    currentTime = "0"; currentTime += timeClient.getHours();
+  }
+  else
+  {
+    currentTime = timeClient.getHours();
+  }
+  currentTime += ":";
+  if(timeClient.getMinutes() <= 9)
+  {
+    currentTime += "0"; currentTime += timeClient.getMinutes();
+  }
+  else
+  {
+    currentTime += timeClient.getMinutes();
+  }
+  currentTime = " " + currentTime;
+  if(disp)
+  {
+   display.print(currentTime);
+   IntensityEffect();
+  }
+  if(disp)
+  {
+   scrollEffect(BTC, 350);
+   delay(300);
+  }
+  if(disp)
+  {
+   scrollEffect(WTR, 350);
+   delay(300);
+  }
+  if(disp)
+  {
+   scrollEffect(NEWS[newsSelect], 330);
+   newsSelect++;
+   if(newsSelect > 5)
+   {
+    newsSelect = 0;
+   }
+  }
+  }
+}
+
+
+void IntensityEffect()
+{
+  for(uint8_t z = 0; z < 2; z++)
+  {
+    for(uint8_t y = 15; y > 0; y--)
+    {
+      if(disp)
+      {
+       display.setIntensity(y);
+       delay(250);
+      }
+    }
+    for(uint8_t x = 0; x < 15; x++)
+    {
+      if(disp)
+      {
+       display.setIntensity(x);
+       delay(250);
+      }
+    }
+  }
+}
+void scrollEffect(String txt, int t)
+{
+  txt.replace("é","e"); // You can remove this part if you dont use any special char
+  txt.replace("è","e");
+  txt.replace("ê","e");
+  txt.replace("ô","o");
+  txt.replace("ë","e");
+  txt.replace("û","u");
+  txt.replace("ù","u");
+  txt.replace("à","a");
+  txt.replace("â","a");
+  txt.replace("ç","c");
+  txt.replace("œ","oe");
+  txt.replace("ï","i");
+  txt.replace("î","i");
+  txt.replace("É","E");
+  txt.replace("È","E");
+  txt.replace("Ê","E");
+  txt.replace("«","\"");
+  txt.replace("»","\"");
+  txt.replace("’","'");
+  String text = "                ";
+  text += txt;
+  int length = text.length();
+  for(int i = 0; i < length +1; i++)
+  {
+    text.remove(0,1);
+    display.print(text);
+    delay(t);
+  } 
+}
