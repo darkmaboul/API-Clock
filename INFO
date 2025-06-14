@@ -10,3 +10,13 @@ all the API are free !
 - BTC (account not required) : https://www.coingecko.com/en/api
 - Weather / temp (account required) : https://openweathermap.org/api
 - News (account required) : https://worldnewsapi.com
+
+3D Model : 
+The 3D Model is available in 3D-Model
+
+You will need :
+- 3/5 screw (1 for IR sensor 2,3 or 4 for the ESP32)
+- 2,3 or 4 magnet for the lid
+- Glue (to stick the Led Matrix to the 3D Part)
+
+Sorry i am not really good in 3D so it might be difficult to screw the ESP  :'(
